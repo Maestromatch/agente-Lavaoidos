@@ -9,6 +9,7 @@ import {
   crearReserva,
   getConversacion,
   saveConversacion,
+  registrarEvento,
 } from "../lib/sheets.js";
 
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -58,6 +59,11 @@ export default async function handler(req, res) {
 async function processMessage(phone, userMessage) {
   // 1. Cargar estado de la conversación desde Google Sheets
   const { history, step, row: existingRow } = await getConversacion(phone);
+
+  // Si es el primer mensaje del paciente, registrar entrada al funnel
+  if (history.length === 0) {
+    await registrarEvento(phone, "primer_msg", { texto: userMessage });
+  }
 
   // 2. Agregar mensaje del usuario al historial
   history.push({ role: "user", content: userMessage });
@@ -115,12 +121,26 @@ async function processMessage(phone, userMessage) {
 
       finalText = finalText.replace("{{LINK_PAGO}}", link);
       newStep = "esperando_pago";
+
+      // Funnel: dio datos completos y recibió link de pago
+      await registrarEvento(phone, "dio_datos", {
+        nombre: action.nombre,
+        rut: action.rut,
+        operativo_id: op.id,
+      });
+      await registrarEvento(phone, "recibio_link", { reserva_id: reservaId });
     }
   }
 
   // Reemplazar placeholder de lista de operativos si el agente lo incluyó
   if (finalText.includes("{{OPERATIVOS}}")) {
     finalText = finalText.replace("{{OPERATIVOS}}", formatOperativos(operativos));
+    // Funnel: el agente mostró el catálogo (solo en flujo normal)
+    if (step !== "esperando_pago") {
+      await registrarEvento(phone, "mostro_operativos", {
+        cantidad: operativos.length,
+      });
+    }
   }
 
   // 7. Enviar respuesta por WhatsApp

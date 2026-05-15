@@ -58,6 +58,33 @@ Registro de reservas (pendientes y confirmadas).
 
 ---
 
+## Hoja: `Funnel`
+
+Cada evento de conversión se registra como una fila. Permite calcular tasas de conversión por etapa, detectar abandonos, y analizar comportamiento por operativo.
+
+Eventos posibles (columna `evento`):
+- `primer_msg` — paciente escribe por primera vez
+- `mostro_operativos` — el agente envió el catálogo
+- `eligio_operativo` — el paciente eligió uno (reservado para futuro)
+- `dio_datos` — paciente completó nombre + RUT
+- `recibio_link` — el agente generó link de pago
+- `pago_completado` — webhook MP confirmó el pago
+- `conversacion_abandonada` — 24h sin respuesta (cron futuro)
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `phone` | string | Identifica al lead. |
+| `evento` | string | Uno de los valores listados arriba. |
+| `timestamp` | datetime | ISO 8601 del momento del evento. |
+| `metadata` | string (JSON) | Datos extra del evento (ej: operativo_id, monto, texto). |
+
+**Cálculos típicos:**
+- Conversión total = `count(pago_completado) / count(primer_msg)`
+- Drop-off por etapa = `count(etapa_N) - count(etapa_N+1)` para cada etapa secuencial
+- Tiempo promedio de cierre = `avg(timestamp(pago_completado) - timestamp(primer_msg))` por phone
+
+---
+
 ## Hoja: `Recordatorios`
 
 Cola de recordatorios programados. El cron `/api/cron-reminders` corre cada 30 min y envía los que ya vencieron.

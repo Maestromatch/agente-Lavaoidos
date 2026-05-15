@@ -8,6 +8,7 @@ import {
   confirmarReserva,
   descontarCupo,
   agendarRecordatorios,
+  registrarEvento,
 } from "../lib/sheets.js";
 
 const mp = new MercadoPagoConfig({
@@ -40,6 +41,14 @@ export default async function handler(req, res) {
     // 1. Confirmar reserva en Google Sheets (retorna null si ya fue procesada)
     const reserva = await confirmarReserva(reservaId, payment.id);
     if (!reserva) return; // pago duplicado o ya procesado
+
+    // Funnel: pago completado (evento final del embudo)
+    await registrarEvento(reserva.phone, "pago_completado", {
+      reserva_id: reservaId,
+      payment_id: payment.id,
+      monto,
+      operativo_id: reserva.operativo_id,
+    });
 
     // 2. Descontar cupo del operativo
     await descontarCupo(reserva.operativo_id);
