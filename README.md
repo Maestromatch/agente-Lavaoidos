@@ -1,6 +1,6 @@
-# Agente Lavaoídos
+# Otopía · Agente Lavaoídos
 
-Asistente de WhatsApp que agenda y cobra cupos en operativos de lavado de oídos en la Región Metropolitana.
+Asistente de WhatsApp para **Otopía**: servicio de operativos de lavado de oídos a domicilio o en empresa en la Región Metropolitana de Chile. Atención por fonoaudiólogo certificado, $15.000 CLP por paciente, reserva vía WhatsApp.
 
 ## Stack
 

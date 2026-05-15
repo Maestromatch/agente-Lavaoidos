@@ -1,6 +1,8 @@
-# Agente Lavaoídos — Guía para Claude Code
+# Otopía — Agente Lavaoídos · Guía para Claude Code
 
-Asistente de WhatsApp que agenda y cobra cupos en operativos de lavado de oídos en la Región Metropolitana (Chile). Toda nueva sesión de Claude Code debe leer este archivo antes de tocar código.
+**Marca:** Otopía (oto + utopía — "donde oyes perfecto"). Servicio de operativos de lavado de oídos **a domicilio o en empresa** en la Región Metropolitana de Chile, realizados por fonoaudiólogo certificado. Precio individual: **$15.000 CLP**. Reserva vía agente de WhatsApp.
+
+Toda nueva sesión de Claude Code debe leer este archivo antes de tocar código.
 
 ---
 
@@ -35,11 +37,13 @@ agente-lavaoidos/
 │   ├── mercadopago.js          ← createPaymentLink
 │   └── sheets.js               ← Capa de acceso a Google Sheets
 ├── public/
-│   ├── index.html              ← Landing pública (CTA a wa.me)
+│   ├── index.html              ← Landing Otopía (HTML standalone con CSS inline + JS de wiring WhatsApp)
 │   ├── pago-exitoso.html
 │   ├── pago-fallido.html
 │   ├── pago-pendiente.html
 │   └── privacy-policy.html
+├── docs/
+│   └── otopia-reference.html   ← HTML de referencia del diseño Otopía (copia limpia, no modificar)
 ├── docs/
 │   ├── sheets-schema.md        ← Columnas exactas de cada hoja
 │   └── fases-original.txt      ← Plan original (referencia)
@@ -72,9 +76,14 @@ Todas se configuran en Vercel (production) y en `.env.local` (dev). Ver `.env.ex
 
 ## Reglas de negocio (que el agente debe respetar)
 
+- Marca: **Otopía**. Servicio a domicilio o en empresa.
+- Precio Plan Individual: **$15.000 CLP** (traslado en RM incluido).
+- Plan Empresa/Grupal: **desde $12.000 CLP por paciente, mínimo 5 personas**. Se solicita cotización.
+- Cobertura RM: Las Condes, Providencia, Vitacura, Ñuñoa, Lo Barnechea, La Reina, Santiago Centro, Macul, Peñalolén, San Miguel, Maipú, La Florida.
 - Solo se cobra online vía Mercadopago. **No se aceptan transferencias.**
-- Duración por paciente: 15–20 min. Apto para niños, adultos y adultos mayores.
-- **Contraindicación:** perforación timpánica → derivar al otorrino, no agendar.
+- Duración por paciente: 15–20 min. Apto desde niños (4+ años con adulto responsable) hasta adultos mayores.
+- **Contraindicación:** perforación timpánica conocida → derivar al otorrino, no agendar.
+- Si en la evaluación inicial no se requiere lavado, se cobra solo consulta a tarifa reducida.
 - Tono: cálido, profesional, español chileno natural, máx 4 líneas por mensaje, 1–2 emojis.
 - Link de pago expira en 24h.
 - Recordatorios: 48h y 2h antes de la cita.
