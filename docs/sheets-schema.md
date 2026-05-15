@@ -58,6 +58,26 @@ Registro de reservas (pendientes y confirmadas).
 
 ---
 
+## Hoja: `Leads`
+
+Personas que llegaron vía Meta Lead Ads u otros canales con opt-in pero que aún no escribieron al WhatsApp por su cuenta. El cron-engagement las usa para outbound proactivo dentro de las reglas de Meta.
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `phone` | string | Número en formato 56XXXXXXXXX (validado). Llave única. |
+| `nombre` | string | Nombre dado en el formulario. |
+| `comuna` | string | Para matchear con operativos nuevos por zona. |
+| `opt_in` | boolean | `true` solo si dio consentimiento explícito (es requisito Meta para outbound). |
+| `origen_ad` | string | `ad_id` o `form_id` que originó al lead. |
+| `form_id` | string | ID del formulario de Lead Ads. |
+| `estado` | string | `nuevo`, `contactado`, `en_conversacion`, `convertido`, `descartado`. |
+| `notificado` | boolean | `true` si el cron ya le envió una notificación. |
+| `creado_en` | datetime | ISO 8601. |
+| `notificado_en` | datetime | ISO 8601. |
+| `ultima_actividad` | datetime | Actualizado al recibir mensajes o re-submits del form. |
+
+---
+
 ## Hoja: `ListaEspera`
 
 Pacientes que no pudieron reservar porque (a) el operativo elegido estaba lleno, (b) no había operativo disponible o (c) no hay operativo cerca de su comuna. El cron de re-engagement (Fase 3.2) los notifica cuando se cumple la condición.

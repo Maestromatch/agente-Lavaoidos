@@ -4,6 +4,10 @@
     {
       "path": "/api/cron-reminders",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron-engagement",
+      "schedule": "0 13 * * *"
     }
   ],
   "functions": {
@@ -13,8 +17,14 @@
     "api/payment-webhook.js": {
       "maxDuration": 30
     },
+    "api/lead-ads-webhook.js": {
+      "maxDuration": 30
+    },
     "api/cron-reminders.js": {
       "maxDuration": 60
+    },
+    "api/cron-engagement.js": {
+      "maxDuration": 120
     }
   },
   "rewrites": [
