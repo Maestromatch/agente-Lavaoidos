@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operativos de Lavado de Oídos — Región Metropolitana</title>
+  <meta name="description" content="Reserva tu cupo en el próximo operativo de lavado de oídos. Atención profesional, rápida y segura." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #fafaf7;
+      --ink: #1a1a1a;
+      --muted: #6b7280;
+      --accent: #0f766e;
+      --accent-hover: #115e59;
+      --card: #ffffff;
+      --border: #e5e7eb;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 1.5rem; }
+    header { padding: 2rem 0 1rem; text-align: center; }
+    header .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    header h1 {
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    header p.sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .hero-img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+      border-radius: 16px;
+      margin: 2rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+    }
+    .cta-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    }
+    .cta-card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .cta-card p { color: var(--muted); margin-bottom: 1.25rem; font-size: 0.95rem; }
+    .btn-whatsapp {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      background: #25D366;
+      color: white;
+      padding: 0.95rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.15s;
+    }
+    .btn-whatsapp:hover { background: #1ebe5a; }
+    .btn-whatsapp svg { width: 20px; height: 20px; fill: white; }
+    .features {
+      margin-top: 2.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .feature {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .feature .icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .feature .title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .feature .desc { color: var(--muted); font-size: 0.85rem; }
+    section.info {
+      margin-top: 2.5rem;
+      padding: 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    section.info h3 { font-size: 1.05rem; margin-bottom: 0.75rem; }
+    section.info ul { list-style: none; }
+    section.info li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.95rem;
+    }
+    section.info li:last-child { border-bottom: none; }
+    section.info li span:first-child { font-size: 1.1rem; }
+    footer {
+      text-align: center;
+      padding: 2.5rem 0 1.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Región Metropolitana · Chile</div>
+      <h1>Operativos de Lavado de Oídos</h1>
+      <p class="sub">Atención profesional realizada por fonoaudiólogo certificado. Reserva tu cupo por WhatsApp en menos de 1 minuto.</p>
+    </header>
+
+    <div class="hero-img" aria-hidden="true">👂</div>
+
+    <div class="cta-card">
+      <h2>Reserva tu cupo ahora</h2>
+      <p>Conversa con nuestro asistente por WhatsApp y elige el operativo más cercano a ti. Pago online, confirmación inmediata.</p>
+      <a class="btn-whatsapp" id="cta-whatsapp" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0 0 12.05 0C5.5 0 .17 5.33.17 11.88c0 2.1.55 4.14 1.6 5.95L0 24l6.32-1.66a11.86 11.86 0 0 0 5.73 1.46h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.24-6.16-3.42-8.44zM12.05 21.8h-.01a9.94 9.94 0 0 1-5.06-1.39l-.36-.21-3.75.98 1-3.66-.24-.38a9.92 9.92 0 0 1-1.52-5.26c0-5.48 4.46-9.94 9.94-9.94 2.66 0 5.15 1.04 7.03 2.92a9.86 9.86 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94zm5.45-7.43c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.08-.3-.15-1.26-.46-2.4-1.48a9.05 9.05 0 0 1-1.67-2.08c-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51l-.57-.01c-.2 0-.52.07-.8.37-.27.3-1.05 1.02-1.05 2.49 0 1.47 1.07 2.89 1.22 3.09.15.2 2.11 3.22 5.11 4.52.71.3 1.27.49 1.7.63.71.23 1.36.2 1.88.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z"/></svg>
+        Reservar por WhatsApp
+      </a>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="icon">⏱</div>
+        <div class="title">15–20 min</div>
+        <div class="desc">Por paciente</div>
+      </div>
+      <div class="feature">
+        <div class="icon">👨‍⚕️</div>
+        <div class="title">Fonoaudiólogo</div>
+        <div class="desc">Profesional certificado</div>
+      </div>
+      <div class="feature">
+        <div class="icon">💳</div>
+        <div class="title">Pago online</div>
+        <div class="desc">Confirmación inmediata</div>
+      </div>
+    </div>
+
+    <section class="info">
+      <h3>¿Qué incluye el servicio?</h3>
+      <ul>
+        <li><span>🔍</span><span><strong>Evaluación otoscópica.</strong> Revisión profesional del canal auditivo.</span></li>
+        <li><span>💧</span><span><strong>Lavado de oídos.</strong> Procedimiento seguro e indoloro para retirar cerumen.</span></li>
+        <li><span>🎧</span><span><strong>Educación en autocuidado auditivo.</strong> Recomendaciones personalizadas.</span></li>
+        <li><span>👶</span><span><strong>Apto para todas las edades.</strong> Niños, adultos y adultos mayores.</span></li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>¿Dudas? Escríbenos por WhatsApp · <a href="/privacidad">Política de privacidad</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // Configurar número y mensaje. Reemplazar 56XXXXXXXXX por el WhatsApp Business real.
+    const WA_PHONE = "56968171774";
+    const WA_MSG = encodeURIComponent("Hola, me interesa reservar un cupo en un operativo de lavado de oídos.");
+    document.getElementById("cta-whatsapp").href = `https://wa.me/${WA_PHONE}?text=${WA_MSG}`;
+  </script>
+</body>
+</html>

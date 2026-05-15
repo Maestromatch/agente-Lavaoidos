@@ -1,0 +1,23 @@
+{
+  "name": "agente-lavaoidos",
+  "version": "0.1.0",
+  "description": "Agente WhatsApp para agendamiento de operativos de lavado de oídos en la Región Metropolitana",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "google-auth-library": "^9.14.0",
+    "google-spreadsheet": "^4.1.4",
+    "mercadopago": "^2.0.6"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}

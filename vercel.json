@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/cron-reminders",
+      "schedule": "*/30 * * * *"
+    }
+  ],
+  "functions": {
+    "api/webhook.js": {
+      "maxDuration": 30
+    },
+    "api/payment-webhook.js": {
+      "maxDuration": 30
+    },
+    "api/cron-reminders.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/pago-exitoso", "destination": "/pago-exitoso.html" },
+    { "source": "/pago-fallido", "destination": "/pago-fallido.html" },
+    { "source": "/pago-pendiente", "destination": "/pago-pendiente.html" },
+    { "source": "/privacidad", "destination": "/privacy-policy.html" }
+  ]
+}

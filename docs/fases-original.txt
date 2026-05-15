@@ -1,0 +1,183 @@
+Plan de Evolución: Agente Lavaoídos
+Fase 1 — Solidez y Confiabilidad (1-2 semanas)
+Antes de crecer, que lo que existe funcione impecable.
+
+1.1 Validación de datos de pacientes
+
+Validar formato RUT chileno (dígito verificador)
+Sanitizar nombres (evitar inyección, caracteres raros)
+Validar que el teléfono sea número chileno válido
+1.2 Lista de espera (ya mencionada en el prompt, sin backend)
+
+Si un operativo está lleno, ofrecer anotarse en lista de espera
+Hoja nueva en Google Sheets: ListaEspera
+Notificar automáticamente cuando se libere un cupo (cancelación o admin)
+1.3 Cancelaciones y reagendamientos
+
+Flujo de cancelación con confirmación
+Liberar el cupo en el operativo
+Refund automático o instrucciones de reembolso vía Mercado Pago
+Log de cancelaciones en Sheets
+1.4 Timeout de sesión
+
+Si el usuario no responde en 24h, limpiar estado y ofrecer empezar de nuevo
+Detectar en cron-reminders.js conversaciones abandonadas
+1.5 Rate limiting básico
+
+Máximo N mensajes por número en ventana de tiempo
+Evitar abusos del webhook
+Fase 2 — Experiencia Mejorada (2-3 semanas)
+Conversación más inteligente, menos fricción para el paciente.
+
+2.1 Detección de contraindicaciones
+
+El agente ya menciona "perforación timpánica" — agregar lógica real
+Hacer preguntas de screening antes de confirmar reserva
+Si hay contraindicación, explicar y redirigir (no vender)
+2.2 Recordatorios mejorados
+
+Recordatorio con instrucciones de preparación (llegar en ayuno, etc.)
+Recordatorio post-servicio: pedir reseña, agendar próximo control
+Canal de confirmación: el paciente puede responder "confirmo" o "cancelar" al recordatorio
+2.3 Historial de paciente
+
+Si el número ya reservó antes, saludar por nombre
+Mostrar historial de visitas ("tu última consulta fue el 12 de marzo")
+Preferencias recordadas (operativo favorito, horario preferido)
+2.4 Mensajes multimedia
+
+Enviar imagen/mapa con la ubicación del operativo al confirmar
+Comprobante visual de la reserva (template de WhatsApp Business)
+Fase 3 — Panel de Administración (2-3 semanas)
+Darle poder al equipo sin que necesiten tocar código.
+
+3.1 Dashboard web básico
+
+Página HTML/JS simple en /public/admin.html (con auth básica)
+Ver reservas del día/semana
+Estado de pagos en tiempo real
+Cupos disponibles por operativo
+3.2 Gestión de operativos desde el panel
+
+Crear/editar/cancelar operativos sin tocar Sheets directamente
+Alertas cuando quedan ≤3 cupos
+3.3 Broadcast de mensajes
+
+Enviar mensaje a todos los pacientes de un operativo (cambio de horario, etc.)
+Filtrar por estado: todos, solo pagaron, solo pendientes
+3.4 Métricas básicas
+
+Tasa de conversión (consultaron → reservaron → pagaron)
+Operativos más populares
+Horarios con más demanda
+Tasa de cancelación
+Fase 4 — Escala y Automatización (3-4 semanas)
+Preparar para más operativos, más ciudades, más volumen.
+
+4.1 Multi-localidad
+
+Soporte para diferentes ciudades/regiones
+El agente pregunta en qué ciudad está el paciente
+Filtrar operativos por zona
+4.2 Sistema de notificaciones inteligentes
+
+Si un operativo se llena, notificar automáticamente a la lista de espera
+Notificar al admin si hay pago fallido o link expirado sin pagar
+Alert si el agente responde algo fuera de lo esperado (guardrail humano)
+4.3 Migración de DB
+
+Google Sheets funciona, pero escala mal
+Evaluar migración a Supabase o PlanetScale (compatible con Vercel, free tier)
+Mantener Sheets como respaldo/exportación
+4.4 Mejoras de Claude
+
+Prompt más compacto con few-shot examples
+Streaming de respuestas para percepción de velocidad
+Fallback a respuesta simple si Claude falla (sin dejar al usuario en silencio)
+Fase 5 — Producto Completo (4-6 semanas)
+Convertirlo en una plataforma replicable.
+
+5.1 Multi-tenant
+
+El mismo sistema para múltiples clínicas/centros
+Configuración por cliente (nombre, operativos, admin, colores)
+5.2 App de admin mobile-first
+
+PWA o React app sencilla
+Push notifications al admin cuando llega nueva reserva
+5.3 Integración con calendario
+
+Exportar operativos a Google Calendar
+Bloquear horarios automáticamente
+5.4 Módulo de fidelización
+
+Descuento para segunda visita
+Referidos: "comparte este link y tu próxima consulta tiene 10% off"
+Propuesta de prioridad inmediata
+Prioridad	Ítem	Impacto	Esfuerzo
+🔴 1	Validación de RUT	Alto	Bajo
+🔴 2	Lista de espera	Alto	Medio
+🔴 3	Flujo de cancelaciones	Alto	Medio
+🟡 4	Timeout de sesión	Medio	Bajo
+🟡 5	Detección contraindicaciones	Alto	Bajo
+🟢 6	Dashboard admin básico	Alto	Alto
+¿Por cuál fase/ítem empezamos? Puedo arrancar con la Fase 1 (solidez) que tiene el mejor ratio impacto/esfuerzo, o si preferís algo más visible como el dashboard de admin, también podemos ir ahí directo.
+
+dame un prompt maestro para ingresarlo a claude code terminal y poder administrar todo de raiz .
+
+Voy a leer los archivos clave del proyecto para construir el prompt maestro con contexto real y preciso.
+
+
+Ejecutado un comando, leer 3 archivos
+Tengo todo el contexto que necesito. Voy a crear el CLAUDE.md — el archivo que Claude Code lee automáticamente al arrancar en este directorio.
+
+Creado
+CLAUDE.md
++237
+-0
+Ahora lo commiteamos y pusheamos al branch de desarrollo:
+
+
+Ejecutado 3 comandos
+El commit quedó listo localmente. El push falló por permisos del repositorio remoto (problema de auth del entorno, no del código). Puedes pushearlo desde tu terminal con git push -u origin claude/project-evolution-plan-zFwO9.
+
+Cómo usar el prompt maestro
+El archivo CLAUDE.md ya está en la raíz del proyecto. Claude Code lo lee automáticamente al arrancar en ese directorio. Para usarlo:
+
+# Desde la carpeta del proyecto
+cd agente-Lavaoidos
+claude
+Con eso solo, Claude Code ya tiene todo el contexto: arquitectura, flujo, DB, variables, backlog y reglas de negocio.
+
+Prompts de arranque sugeridos para cada tarea
+Para implementar algo del backlog:
+
+Implementa la validación de RUT chileno en el flujo de reserva.
+Ver backlog Fase 1 en CLAUDE.md.
+Para debug:
+
+El webhook no está confirmando reservas después del pago.
+Revisa payment-webhook.js y confirmarReserva() en lib/sheets.js.
+Para agregar una feature nueva:
+
+Agrega lista de espera cuando un operativo no tiene cupos.
+Necesita: nueva pestaña ListaEspera en Sheets, lógica en webhook.js
+cuando el agente detecte que no hay cupos, y notificación automática
+cuando se libere un cupo. Ver CLAUDE.md para patrones de código.
+Para deploy:
+
+Revisa si hay cambios pendientes, haz deploy a producción
+y verifica que el webhook de WhatsApp responde correctamente.
+El CLAUDE.md es el punto de partida: cada sesión nueva arranca con el mapa completo del proyecto sin necesidad de re-explicar nada.
+
+El hook detecta el commit pendiente. Voy a reintentar el push.
+
+Ejecutado
+Push pending commit to remote
+El push sigue fallando con error 403 — el entorno no tiene permisos para escribir al remoto Maestromatch/agente-Lavaoidos. El commit d04b1ab (CLAUDE.md) está listo localmente en el branch claude/project-evolution-plan-zFwO9.
+
+Para resolverlo desde tu terminal:
+
+cd agente-Lavaoidos
+git push -u origin claude/project-evolution-plan-zFwO9
+Si el problema persiste, verifica que tu token de GitHub tenga permisos de escritura sobre ese repositorio (repo scope).

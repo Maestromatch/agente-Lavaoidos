@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno — NUNCA subir al repo
+.env
+.env.local
+.env.production
+.env.development
+.env*.local
+
+# Credenciales Google (service account JSONs)
+*.apps.googleusercontent.com.json
+integral-surfer-*.json
+client_secret_*.json
+
+# Vercel
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
