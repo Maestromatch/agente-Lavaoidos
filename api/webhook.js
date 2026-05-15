@@ -11,7 +11,9 @@ import {
   saveConversacion,
   registrarEvento,
   getFAQ,
+  agregarListaEspera,
 } from "../lib/sheets.js";
+import { validarRut } from "../lib/validators.js";
 
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -95,6 +97,46 @@ async function processMessage(phone, userMessage) {
   const action = extractAction(assistantText);
   let finalText = removeActionTag(assistantText);
   let newStep   = step;
+
+  if (action?.type === "CREAR_RESERVA") {
+    // Validar RUT antes de crear reserva. Si inválido, sobrescribir respuesta
+    // pidiendo corrección sin avanzar al pago.
+    const rutCheck = validarRut(action.rut);
+    if (!rutCheck.valido) {
+      finalText =
+        `Tu RUT no parece válido (${rutCheck.motivo}). ` +
+        `¿Me lo confirmas con formato 12.345.678-5? 🪪`;
+      newStep = "validando_rut";
+      await registrarEvento(phone, "rut_invalido", {
+        rut_intentado: action.rut,
+        motivo: rutCheck.motivo,
+      });
+      // Saltar la creación de reserva
+      action.type = "_SKIP";
+    } else {
+      // Usar la versión normalizada en todos los registros
+      action.rut = rutCheck.normalizado;
+    }
+  }
+
+  if (action?.type === "LISTA_ESPERA") {
+    try {
+      await agregarListaEspera({
+        phone,
+        nombre: action.nombre,
+        comuna: action.comuna,
+        operativo_id_deseado: action.operativo_id_deseado,
+        motivo: action.motivo || "cupo_agotado",
+      });
+      await registrarEvento(phone, "anotado_lista_espera", {
+        comuna: action.comuna,
+        operativo_id_deseado: action.operativo_id_deseado,
+      });
+      newStep = "en_lista_espera";
+    } catch (err) {
+      console.error("Error agregando a lista de espera:", err);
+    }
+  }
 
   if (action?.type === "CREAR_RESERVA") {
     const op = operativos.find((o) => o.id === action.operativo_id) || operativos[0];
@@ -200,13 +242,26 @@ FLUJO QUE DEBES SEGUIR:
 5. Cuando tengas nombre + RUT + operativo elegido, incluye la acción especial (ver abajo) y escribe {{LINK_PAGO}} donde debe aparecer el link.
 6. Indica que al pagar queda confirmado automáticamente y recibirá recordatorios.
 
-ACCIÓN ESPECIAL (incluir cuando tengas todos los datos):
-[ACTION:CREAR_RESERVA|operativo_id:ID_AQUI|nombre:NOMBRE_COMPLETO|rut:RUT_AQUI]
+ACCIONES ESPECIALES (incluir UNA cuando corresponda; el sistema las procesa):
 
-Ejemplo de mensaje al generar el link:
-"¡Perfecto! Tu reserva está casi lista 🎉
-Paga aquí para confirmar tu cupo: {{LINK_PAGO}}
-El link expira en 24 horas. Al pagar, te llegará la confirmación. 👂"
+1. CREAR_RESERVA — cuando tengas nombre + RUT + operativo_id elegido:
+   [ACTION:CREAR_RESERVA|operativo_id:ID_AQUI|nombre:NOMBRE_COMPLETO|rut:RUT_AQUI]
+   Escribe {{LINK_PAGO}} donde debe aparecer el link.
+
+   Ejemplo:
+   "¡Perfecto! Tu reserva está casi lista 🎉
+   Paga aquí para confirmar tu cupo: {{LINK_PAGO}}
+   El link expira en 24 horas. Al pagar, te llegará la confirmación. 👂"
+
+2. LISTA_ESPERA — cuando no hay operativos disponibles, el operativo elegido está
+   lleno, o no hay operativo cerca de la comuna del paciente. Pide primero
+   nombre + comuna si no los tienes:
+   [ACTION:LISTA_ESPERA|nombre:NOMBRE|comuna:COMUNA|operativo_id_deseado:ID_O_VACIO|motivo:cupo_agotado|sin_operativos|fuera_de_zona]
+
+   Ejemplo:
+   "Te anoté en la lista de espera, {{nombre}} 📋
+   Te avisaré apenas se libere un cupo o programe un operativo cerca tuyo.
+   No pierdes tu lugar 👂"
 
 OBJECIONES COMUNES Y CÓMO RESPONDER:
 - *"Está caro"* → Reforzar valor: "Incluye otoscopía + lavado + educación, todo por fonoaudiólogo, en menos de 20 min. Una consulta privada equivale a 3x este precio." Si insiste, ofrecer recordarle el próximo operativo más económico.
@@ -218,9 +273,12 @@ OBJECIONES COMUNES Y CÓMO RESPONDER:
 
 REGLAS ESTRICTAS:
 - Si el paciente menciona perforación timpánica → no agendar, sugerir otorrino.
-- Si no hay operativos → avisar amablemente y ofrecer anotarlo en lista de espera.
+- Si no hay operativos → avisar y ofrecer LISTA_ESPERA (pidiendo nombre+comuna).
+- Si el operativo elegido está sin cupos → ofrecer otro operativo o LISTA_ESPERA.
 - Si preguntan por transferencia → explicar que solo se acepta pago online.
 - Si ya están en paso "esperando_pago" → recordar que deben completar el pago del link enviado.
+- Si están en paso "en_lista_espera" → confirmar que están anotados y agradecer la paciencia.
+- Si están en paso "validando_rut" → pedir el RUT correcto y reusar la acción CREAR_RESERVA cuando lo den.
 - Nunca prometer descuentos sin tener autorización explícita en la INFORMACIÓN ADICIONAL VALIDADA.`;
 }
 

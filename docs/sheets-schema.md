@@ -58,6 +58,27 @@ Registro de reservas (pendientes y confirmadas).
 
 ---
 
+## Hoja: `ListaEspera`
+
+Pacientes que no pudieron reservar porque (a) el operativo elegido estaba lleno, (b) no había operativo disponible o (c) no hay operativo cerca de su comuna. El cron de re-engagement (Fase 3.2) los notifica cuando se cumple la condición.
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `phone` | string | Identificador del lead. |
+| `nombre` | string | Nombre que dio. |
+| `comuna` | string | Comuna del paciente (para emparejar con operativos nuevos por zona). |
+| `operativo_id_deseado` | string | FK opcional a `Operativos.id`. Vacío si solo quiere ser notificado de operativos futuros. |
+| `motivo` | string | `cupo_agotado`, `sin_operativos`, `fuera_de_zona`. |
+| `notificado` | boolean | `true` cuando ya se le avisó. |
+| `creado_en` | datetime | ISO 8601. |
+| `notificado_en` | datetime | ISO 8601, al notificar. |
+
+**Triggers de notificación (futuro Fase 3.2):**
+- Cancelación de reserva en `motivo=cupo_agotado` + mismo `operativo_id_deseado` → template `cupo_liberado`.
+- Operativo nuevo cargado cuya comuna matchea → template `nuevo_operativo_zona`.
+
+---
+
 ## Hoja: `FAQ`
 
 Respuestas validadas que el agente puede inyectar al system prompt cuando detecta keywords en el mensaje del paciente. Permite ajustar el comportamiento sin redeployar.
