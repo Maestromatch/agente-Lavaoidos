@@ -58,6 +58,32 @@ Registro de reservas (pendientes y confirmadas).
 
 ---
 
+## Hoja: `FAQ`
+
+Respuestas validadas que el agente puede inyectar al system prompt cuando detecta keywords en el mensaje del paciente. Permite ajustar el comportamiento sin redeployar.
+
+| Columna | Tipo | Ejemplo | Notas |
+|---|---|---|---|
+| `pregunta` | string | `¿El lavado de oídos duele?` | Solo para humanos; el agente no la usa para matchear. |
+| `keywords` | string | `duele,dolor,molesta,molestia` | Lista separada por comas (case-insensitive). El agente busca si alguna keyword (mín 3 caracteres) aparece en el mensaje del paciente. |
+| `respuesta` | string | `No, el procedimiento es indoloro. Algunos sienten una leve presión por el agua tibia, nada más.` | La inyecta al system prompt como "información validada". |
+| `activo` | boolean | `TRUE` | `TRUE`/`FALSE`. Si `FALSE`, no se considera. |
+
+**Reglas:**
+- Solo se inyectan máximo **3 matches** por mensaje (para no inflar el prompt).
+- Keywords de menos de 3 caracteres se ignoran (`a`, `no`, etc.).
+- Cuando una respuesta se valida y se sube a la hoja, queda disponible de inmediato sin redeploy.
+
+**Ejemplos sugeridos:**
+- `¿Duele?` → keywords: `duele,dolor,molesta`
+- `¿Tienen estacionamiento?` → keywords: `estacionamiento,parking,auto`
+- `¿Atienden niños?` → keywords: `niño,niña,hijo,hija,bebé`
+- `¿Cómo me preparo?` → keywords: `preparo,preparación,antes,ayuno`
+- `¿Aceptan tarjeta?` → keywords: `tarjeta,visa,master,débito,crédito`
+- `¿Hacen reembolso?` → keywords: `reembolso,devolución,cancelar pago`
+
+---
+
 ## Hoja: `Funnel`
 
 Cada evento de conversión se registra como una fila. Permite calcular tasas de conversión por etapa, detectar abandonos, y analizar comportamiento por operativo.

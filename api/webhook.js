@@ -10,6 +10,7 @@ import {
   getConversacion,
   saveConversacion,
   registrarEvento,
+  getFAQ,
 } from "../lib/sheets.js";
 
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -68,11 +69,17 @@ async function processMessage(phone, userMessage) {
   // 2. Agregar mensaje del usuario al historial
   history.push({ role: "user", content: userMessage });
 
-  // 3. Obtener operativos disponibles (datos en tiempo real)
-  const operativos = await getOperativosDisponibles();
+  // 3. Obtener operativos disponibles + FAQ (datos en tiempo real)
+  const [operativos, faqAll] = await Promise.all([
+    getOperativosDisponibles(),
+    getFAQ(),
+  ]);
+
+  // Filtrar FAQs relevantes al mensaje actual del usuario
+  const faqRelevantes = matchFAQ(userMessage, faqAll);
 
   // 4. Construir system prompt con contexto actualizado
-  const systemPrompt = buildSystemPrompt(operativos, step);
+  const systemPrompt = buildSystemPrompt(operativos, step, faqRelevantes);
 
   // 5. Llamar a Claude con historial completo
   const response = await claude.messages.create({
@@ -153,17 +160,24 @@ async function processMessage(phone, userMessage) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(operativos, step) {
+function buildSystemPrompt(operativos, step, faqRelevantes = []) {
   const hayOperativos = operativos.length > 0;
 
+  const bloqueFAQ = faqRelevantes.length
+    ? `\nINFORMACIÓN ADICIONAL VALIDADA (usar SOLO si responde la duda actual del paciente):\n${faqRelevantes
+        .map((f) => `• ${f.pregunta}\n  → ${f.respuesta}`)
+        .join("\n")}\n`
+    : "";
+
   return `Eres el asistente virtual de *Operativos de Lavado de Oídos* en la Región Metropolitana de Chile.
-Tu único trabajo es ayudar al paciente a reservar y pagar su cupo en el próximo operativo.
+Tu único trabajo es ayudar al paciente a reservar y pagar su cupo en el próximo operativo, y vencer sus objeciones con honestidad.
 
 PERSONALIDAD:
 - Cálido, profesional y muy conciso. Máximo 4 líneas por mensaje.
 - Español chileno natural. Tutear siempre.
 - 1–2 emojis por mensaje, no más.
 - Nunca inventes información. Si no sabes algo, di "te confirmo en breve".
+- Toma iniciativa: si el paciente duda, pregunta qué le frena y resuelve.
 
 SERVICIO QUE SE OFRECE:
 - Operativo de lavado de oídos realizado por fonoaudiólogo certificado.
@@ -175,7 +189,7 @@ SERVICIO QUE SE OFRECE:
 
 OPERATIVOS DISPONIBLES (tiempo real):
 ${hayOperativos ? JSON.stringify(operativos, null, 2) : "No hay operativos activos actualmente."}
-
+${bloqueFAQ}
 ESTADO ACTUAL DE LA CONVERSACIÓN: ${step}
 
 FLUJO QUE DEBES SEGUIR:
@@ -194,11 +208,30 @@ Ejemplo de mensaje al generar el link:
 Paga aquí para confirmar tu cupo: {{LINK_PAGO}}
 El link expira en 24 horas. Al pagar, te llegará la confirmación. 👂"
 
+OBJECIONES COMUNES Y CÓMO RESPONDER:
+- *"Está caro"* → Reforzar valor: "Incluye otoscopía + lavado + educación, todo por fonoaudiólogo, en menos de 20 min. Una consulta privada equivale a 3x este precio." Si insiste, ofrecer recordarle el próximo operativo más económico.
+- *"Está lejos / no me queda cerca"* → Mostrar el operativo más cercano disponible. Si ninguno es cercano, ofrecer anotarlo en lista de espera para su zona.
+- *"No conozco / no confío"* → Mencionar fonoaudiólogo certificado, garantía profesional, foto del lugar si la pide. Nunca exagerar.
+- *"Estoy ocupado / no tengo tiempo"* → Recalcar que son 15-20 min, ofrecer el horario más temprano/tarde del operativo más conveniente.
+- *"Necesito pensarlo"* → No presionar. Validar la decisión y ofrecer que lo agendamos cuando confirme. Avisar que los cupos son limitados.
+- *Dudas técnicas* ("¿duele?", "¿es seguro?", "¿qué pasa si tengo cera dura?") → Responder con honestidad técnica desde la INFORMACIÓN ADICIONAL VALIDADA. Si la pregunta es muy específica, decir "te confirmo en breve con la fonoaudióloga".
+
 REGLAS ESTRICTAS:
 - Si el paciente menciona perforación timpánica → no agendar, sugerir otorrino.
-- Si no hay operativos → avisar amablemente y ofrecer anotarlos en lista de espera.
+- Si no hay operativos → avisar amablemente y ofrecer anotarlo en lista de espera.
 - Si preguntan por transferencia → explicar que solo se acepta pago online.
-- Si ya están en paso "esperando_pago" → recordar que deben completar el pago del link enviado.`;
+- Si ya están en paso "esperando_pago" → recordar que deben completar el pago del link enviado.
+- Nunca prometer descuentos sin tener autorización explícita en la INFORMACIÓN ADICIONAL VALIDADA.`;
+}
+
+// Devuelve las FAQs cuyas keywords aparecen en el mensaje del usuario.
+// Hasta 3 matches para no inflar el system prompt.
+function matchFAQ(userMessage, faqs) {
+  const lower = userMessage.toLowerCase();
+  const matches = faqs.filter((f) =>
+    f.keywords.some((k) => k.length > 2 && lower.includes(k))
+  );
+  return matches.slice(0, 3);
 }
 
 function extractAction(text) {
