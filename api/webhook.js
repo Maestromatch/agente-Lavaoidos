@@ -12,10 +12,33 @@ import {
   registrarEvento,
   getFAQ,
   agregarListaEspera,
+  registrarObjecion,
 } from "../lib/sheets.js";
 import { validarRut } from "../lib/validators.js";
+import { buscarWeb } from "../lib/web-research.js";
 
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const WEB_TOOL = {
+  name: "buscar_web",
+  description:
+    "Busca información actualizada en internet sobre dudas técnicas del paciente " +
+    "(otoscopía, cerumen, audífonos, contraindicaciones específicas, etc.). " +
+    "Usar SOLO cuando el paciente pregunte algo que no está en la INFORMACIÓN " +
+    "ADICIONAL VALIDADA del system prompt y la respuesta requiera datos técnicos " +
+    "o estudios. No usar para preguntas administrativas (precio, horarios, reservas).",
+  input_schema: {
+    type: "object",
+    properties: {
+      query: {
+        type: "string",
+        description:
+          "Consulta corta y específica en español. Ej: 'cuántas veces al año se recomienda lavar los oídos'",
+      },
+    },
+    required: ["query"],
+  },
+};
 
 export default async function handler(req, res) {
   // ── Verificación del webhook (Meta lo llama una sola vez al registrar) ──────
@@ -83,15 +106,18 @@ async function processMessage(phone, userMessage) {
   // 4. Construir system prompt con contexto actualizado
   const systemPrompt = buildSystemPrompt(operativos, step, faqRelevantes);
 
-  // 5. Llamar a Claude con historial completo
-  const response = await claude.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 600,
-    system: systemPrompt,
-    messages: history,
-  });
+  // 5. Llamar a Claude con historial completo (con loop de tool_use si Tavily está habilitada)
+  const { response, finalAssistantContent } = await callClaudeWithTools(
+    systemPrompt,
+    history,
+    phone
+  );
 
-  let assistantText = response.content[0].text;
+  // Extraer texto final del último mensaje del assistant
+  const textBlock = response.content.find((c) => c.type === "text");
+  let assistantText =
+    textBlock?.text ||
+    "Disculpa, déjame revisar eso. ¿Puedes contarme un poco más?";
 
   // 6. Detectar y ejecutar acciones especiales del agente
   const action = extractAction(assistantText);
@@ -117,6 +143,18 @@ async function processMessage(phone, userMessage) {
       // Usar la versión normalizada en todos los registros
       action.rut = rutCheck.normalizado;
     }
+  }
+
+  if (action?.type === "REGISTRAR_MOTIVO") {
+    await registrarObjecion({
+      phone,
+      categoria: action.categoria || "otro",
+      texto_original: userMessage,
+      paso_en_que_quedo: step,
+    });
+    await registrarEvento(phone, "motivo_registrado", {
+      categoria: action.categoria,
+    });
   }
 
   if (action?.type === "LISTA_ESPERA") {
@@ -200,6 +238,67 @@ async function processMessage(phone, userMessage) {
   await saveConversacion(phone, { history, step: newStep }, existingRow);
 }
 
+// ── Llamada a Claude con loop de tool_use ─────────────────────────────────────
+// Si TAVILY_API_KEY está configurada, registramos el tool buscar_web.
+// Loop hasta máximo 2 iteraciones (1 búsqueda permitida por mensaje del usuario).
+
+async function callClaudeWithTools(systemPrompt, baseHistory, phone) {
+  const tavilyOn = !!process.env.TAVILY_API_KEY;
+  const messages = baseHistory.map((m) => ({ ...m }));
+  const MAX_ITER = 2;
+
+  let response;
+  let iter = 0;
+
+  while (iter < MAX_ITER) {
+    iter++;
+
+    response = await claude.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 600,
+      system: systemPrompt,
+      messages,
+      ...(tavilyOn ? { tools: [WEB_TOOL] } : {}),
+    });
+
+    if (response.stop_reason !== "tool_use") break;
+
+    const toolUse = response.content.find((c) => c.type === "tool_use");
+    if (!toolUse) break;
+
+    // Ejecutar el tool
+    let toolResult = "No se obtuvo información.";
+    if (toolUse.name === "buscar_web") {
+      const data = await buscarWeb(toolUse.input?.query || "");
+      if (data) {
+        toolResult =
+          `Resumen: ${data.resumen}\n\n` +
+          `Fuentes:\n${data.fuentes
+            .map((f, i) => `${i + 1}. ${f.title}\n   ${f.snippet}`)
+            .join("\n")}`;
+        await registrarEvento(phone, "web_research_usado", {
+          query: toolUse.input?.query,
+          n_fuentes: data.fuentes.length,
+        });
+      }
+    }
+
+    messages.push({ role: "assistant", content: response.content });
+    messages.push({
+      role: "user",
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: toolUse.id,
+          content: toolResult,
+        },
+      ],
+    });
+  }
+
+  return { response, finalAssistantContent: response.content };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(operativos, step, faqRelevantes = []) {
@@ -262,6 +361,13 @@ ACCIONES ESPECIALES (incluir UNA cuando corresponda; el sistema las procesa):
    "Te anoté en la lista de espera, {{nombre}} 📋
    Te avisaré apenas se libere un cupo o programe un operativo cerca tuyo.
    No pierdes tu lugar 👂"
+
+3. REGISTRAR_MOTIVO — SOLO cuando un paciente que abandonó una conversación
+   responde al mensaje "¿qué te frenó?" con un motivo claro. Categoriza el motivo
+   en uno de: precio, tiempo, confianza, ubicacion, indecision, contraindicacion, otro.
+   [ACTION:REGISTRAR_MOTIVO|categoria:precio]
+   Después, si el paciente quiere retomar, continúa el flujo normal. Si no,
+   agradece y cierra amablemente.
 
 OBJECIONES COMUNES Y CÓMO RESPONDER:
 - *"Está caro"* → Reforzar valor: "Incluye otoscopía + lavado + educación, todo por fonoaudiólogo, en menos de 20 min. Una consulta privada equivale a 3x este precio." Si insiste, ofrecer recordarle el próximo operativo más económico.

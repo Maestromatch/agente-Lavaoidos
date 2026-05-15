@@ -8,6 +8,10 @@
     {
       "path": "/api/cron-engagement",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron-weekly-report",
+      "schedule": "0 23 * * 0"
     }
   ],
   "functions": {
@@ -25,6 +29,9 @@
     },
     "api/cron-engagement.js": {
       "maxDuration": 120
+    },
+    "api/cron-weekly-report.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

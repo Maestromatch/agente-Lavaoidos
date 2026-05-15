@@ -29,8 +29,9 @@ Estado por número de teléfono. Permite que el agente sea stateless (Vercel) us
 |---|---|---|
 | `phone` | string | Número con código país, sin `+` (`56968171774`). Llave. |
 | `history` | string (JSON) | Array de mensajes `[{"role":"user","content":"..."}]`. Máx 20. |
-| `step` | string | `inicio`, `eligiendo`, `confirmar`, `esperando_pago`. |
+| `step` | string | `inicio`, `mostro_operativos`, `eligio`, `validando_rut`, `esperando_pago`, `en_lista_espera`. |
 | `ultimo_mensaje` | datetime | ISO 8601. |
+| `motivo_pedido` | boolean | `true` si el cron de re-engagement ya le preguntó qué lo frenó (evita repreguntar). |
 
 ---
 
@@ -55,6 +56,20 @@ Registro de reservas (pendientes y confirmadas).
 | `payment_id` | string | ID de pago de Mercadopago (al confirmar). |
 | `creado_en` | datetime | ISO 8601. |
 | `confirmado_en` | datetime | ISO 8601, al recibir webhook de pago. |
+
+---
+
+## Hoja: `Objeciones`
+
+Motivos de no-reserva categorizados. El cron-engagement pregunta a conversaciones abandonadas qué los frenó; cuando responden, el agente categoriza con Claude y registra acá. El reporte semanal lo usa para mostrar top objeciones.
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `phone` | string | Identificador. |
+| `categoria` | string | Una de: `precio`, `tiempo`, `confianza`, `ubicacion`, `indecision`, `contraindicacion`, `otro`. |
+| `texto_original` | string | Lo que escribió el lead, sin categorizar. |
+| `paso_en_que_quedo` | string | Step en que estaba la conversación al abandonar. |
+| `creado_en` | datetime | ISO 8601. |
 
 ---
 

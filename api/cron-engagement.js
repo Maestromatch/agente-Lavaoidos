@@ -14,8 +14,11 @@ import {
   marcarLeadNotificado,
   getSheet,
   getOperativosDisponibles,
+  getConversacionesAbandonadas,
+  marcarMotivoPedido,
 } from "../lib/sheets.js";
 import { sendTemplate, TEMPLATE_NAMES } from "../lib/templates.js";
+import { sendWhatsAppMessage } from "../lib/whatsapp.js";
 
 export default async function handler(req, res) {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -25,6 +28,7 @@ export default async function handler(req, res) {
   const resumen = {
     leads_tibios_notificados: 0,
     leads_zona_notificados: 0,
+    motivos_pedidos: 0,
     errores: 0,
   };
 
@@ -52,6 +56,26 @@ export default async function handler(req, res) {
         resumen.leads_tibios_notificados++;
       } catch (err) {
         console.error(`Lead tibio ${lead.get("phone")}:`, err.message);
+        resumen.errores++;
+      }
+    }
+
+    // ── 1.b Conversaciones abandonadas: pedir motivo ─────────────────────────
+    // Estas son personas dentro de la ventana de 24h (mensajes recientes),
+    // por lo tanto se les puede enviar mensaje normal sin template.
+    const abandonadas = await getConversacionesAbandonadas();
+    for (const conv of abandonadas) {
+      try {
+        await sendWhatsAppMessage(
+          conv.get("phone"),
+          "Hola 👋 Vi que quedaste en plena conversación pero no completaste tu reserva. " +
+            "¿Qué te frenó? Tu respuesta nos ayuda muchísimo a mejorar 🙏\n\n" +
+            "Si quieres, podemos retomar y agendarte el cupo ahora mismo."
+        );
+        await marcarMotivoPedido(conv.get("phone"));
+        resumen.motivos_pedidos++;
+      } catch (err) {
+        console.error(`Motivo abandonada ${conv.get("phone")}:`, err.message);
         resumen.errores++;
       }
     }
